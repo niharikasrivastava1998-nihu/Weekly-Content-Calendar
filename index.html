@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InstaPlan AI | Employer Branding</title>
+    <title>InstaPlan AI | BFL Branding</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid #e2e8f0; }
+        .glass-card { background: white; border: 1px solid #e2e8f0; }
         .nav-active { background-color: #2563eb !important; color: white !important; }
         .view-section { display: none; }
         .view-section.active { display: block; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-        .day-box { min-height: 140px; border-top-width: 4px; transition: transform 0.2s; }
-        .day-box:hover { transform: scale(1.02); z-index: 10; }
+        .day-box { min-height: 120px; border-top: 4px solid #cbd5e1; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans">
@@ -23,148 +22,111 @@
             <nav class="space-y-2">
                 <button onclick="showSection('dashboard', this)" class="nav-btn w-full text-left p-3 rounded-lg nav-active">Dashboard</button>
                 <button onclick="showSection('calendar', this)" class="nav-btn w-full text-left p-3 rounded-lg hover:bg-slate-800">30-Day Calendar</button>
-                <button onclick="showSection('settings', this)" class="nav-btn w-full text-left p-3 rounded-lg hover:bg-slate-800">Settings</button>
             </nav>
         </aside>
 
-        <main class="flex-1 overflow-y-auto p-4 md:p-10">
+        <main class="flex-1 overflow-y-auto p-10">
             
             <div id="dashboard" class="view-section active">
                 <header class="mb-10">
-                    <h2 class="text-4xl font-black">Social Strategy Hub</h2>
-                    <p class="text-slate-500 mt-2 text-lg">AI-powered planning for content marketers.</p>
+                    <h2 class="text-4xl font-black italic">Strategy Hub</h2>
+                    <p class="text-slate-500">Create your 30-day employer branding roadmap.</p>
                 </header>
 
-                <div class="glass-card p-8 rounded-3xl shadow-xl max-w-2xl border-2 border-blue-100">
+                <div class="glass-card p-8 rounded-3xl shadow-xl max-w-xl border-2 border-blue-50">
                     <div class="space-y-6">
                         <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Target Niche / Topic</label>
-                            <input type="text" id="nicheInput" value="Employer Branding for Tech Company" 
-                                   class="w-full p-4 border-2 rounded-2xl outline-none focus:border-blue-500 transition-colors text-lg">
+                            <label class="block text-xs font-bold uppercase mb-2">Your Niche</label>
+                            <input type="text" id="nicheInput" value="Employer Branding for BFL" class="w-full p-4 border rounded-2xl outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
-                        <button id="generateBtn" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-3">
-                            <span id="btnText">✨ Generate 30-Day Masterplan</span>
+                        <button id="generateBtn" onclick="startGeneration()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
+                            ✨ Generate 30-Day Plan
                         </button>
                     </div>
                 </div>
             </div>
 
             <div id="calendar" class="view-section">
-                <header class="mb-8 flex justify-between items-end">
-                    <div>
-                        <h2 class="text-3xl font-bold">30-Day Content Matrix</h2>
-                        <p class="text-slate-500">Synchronized daily distribution</p>
-                    </div>
-                    <button onclick="window.print()" class="text-sm font-bold text-blue-600 hover:underline">Print / Save PDF</button>
-                </header>
-                <div class="calendar-grid mb-4 font-black text-center text-slate-400 text-xs uppercase tracking-tighter">
+                <h2 class="text-3xl font-bold mb-6">30-Day Roadmap</h2>
+                <div class="calendar-grid mb-4 text-center text-[10px] font-bold uppercase text-slate-400">
                     <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
                 </div>
-                <div id="calendarContent" class="calendar-grid">
-                    </div>
-            </div>
-
-            <div id="settings" class="view-section">
-                <header class="mb-8"><h2 class="text-3xl font-bold">App Configuration</h2></header>
-                <div class="glass-card p-6 rounded-2xl max-w-lg border-2">
-                    <label class="block mb-2 font-bold uppercase text-xs text-slate-500">Gemini 3 API Key</label>
-                    <input type="password" id="apiKeyInput" class="w-full p-3 border rounded-xl mb-4 bg-slate-50">
-                    <button onclick="saveKey()" class="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold">Update & Sync</button>
-                    <p class="text-xs text-slate-400 mt-4 leading-relaxed">This key is used to communicate with Google's GenAI models. Your key remains in your browser's local storage.</p>
-                </div>
+                <div id="calendarContent" class="calendar-grid"></div>
             </div>
 
         </main>
     </div>
 
-    <script type="module">
-        import { GoogleGenAI } from "https://esm.run/@google/genai";
+    <script>
+        const API_KEY = "AIzaSyA6Qa_e_VopFP5J0MAatNLCo-lmDn4SWvc";
 
-        // Hardcoded API Key as requested
-        const MASTER_KEY = "AIzaSyA6Qa_e_VopFP5J0MAatNLCo-lmDn4SWvc";
-        
-        // Setup Logic
-        window.onload = () => {
-            if (!localStorage.getItem('GEMINI_KEY')) {
-                localStorage.setItem('GEMINI_KEY', MASTER_KEY);
-            }
-            document.getElementById('apiKeyInput').value = localStorage.getItem('GEMINI_KEY');
-        };
-
-        window.saveKey = () => {
-            localStorage.setItem('GEMINI_KEY', document.getElementById('apiKeyInput').value);
-            alert("Configuration Synced!");
-        };
-
-        window.showSection = (id, btn) => {
+        function showSection(id, btn) {
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
             if(btn) btn.classList.add('nav-active');
-        };
+        }
 
-        // Generation Process
-        document.getElementById('generateBtn').addEventListener('click', async () => {
-            const key = localStorage.getItem('GEMINI_KEY');
+        async function startGeneration() {
             const niche = document.getElementById('nicheInput').value;
             const btn = document.getElementById('generateBtn');
-            const btnText = document.getElementById('btnText');
-
-            if (!key) return alert("Missing API Key");
             
             btn.disabled = true;
-            btnText.innerText = "⏳ AI is thinking (takes ~10s)...";
+            btn.innerText = "⏳ AI is drafting your plan...";
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+            
+            const payload = {
+                contents: [{
+                    parts: [{
+                        text: `Create a 30-day Instagram plan for ${niche}. 
+                        Return ONLY a JSON array of 30 objects. 
+                        Format: [{"day": 1, "type": "Reel", "topic": "Title", "hook": "First line"}]`
+                    }]
+                }]
+            };
 
             try {
-                const ai = new GoogleGenAI({apiKey: key});
-                
-                // Using Gemini 3 Flash (Latest 2026 Stable Model)
-                const prompt = `Act as an expert social media strategist. Generate a synchronized 30-day Instagram content plan for: ${niche}. 
-                Output MUST be a raw JSON array of 30 items. No markdown, no backticks.
-                Schema: [{"day": 1, "type": "Reel" | "Carousel" | "Static", "topic": "Short Title", "hook": "Engaging hook line"}]`;
-
-                const result = await ai.models.generateContent({
-                    model: 'gemini-3-flash',
-                    contents: [{ role: 'user', parts: [{ text: prompt }] }]
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
 
-                const rawText = result.response.text().replace(/```json|```/g, "").trim();
-                const data = JSON.parse(rawText);
+                const result = await response.json();
+                const text = result.candidates[0].content.parts[0].text;
+                const cleanJson = text.replace(/```json|```/g, "").trim();
+                const data = JSON.parse(cleanJson);
 
                 renderCalendar(data);
                 showSection('calendar', document.querySelectorAll('.nav-btn')[1]);
 
             } catch (err) {
                 console.error(err);
-                alert("Generation Error: " + err.message);
+                alert("Error: Key might be inactive or niche is empty.");
             } finally {
                 btn.disabled = false;
-                btnText.innerText = "✨ Generate 30-Day Masterplan";
+                btn.innerText = "✨ Generate 30-Day Plan";
             }
-        });
+        }
 
         function renderCalendar(data) {
             const container = document.getElementById('calendarContent');
             container.innerHTML = "";
-            
             data.forEach(item => {
-                const colors = {
-                    'Reel': 'border-blue-500 bg-blue-50',
-                    'Carousel': 'border-purple-500 bg-purple-50',
-                    'Static': 'border-emerald-500 bg-emerald-50'
-                };
+                const day = document.createElement('div');
+                day.className = "day-box glass-card rounded-xl p-3 shadow-sm bg-white";
+                if(item.type === 'Reel') day.style.borderTopColor = '#3b82f6';
+                if(item.type === 'Carousel') day.style.borderTopColor = '#a855f7';
                 
-                const card = document.createElement('div');
-                card.className = `day-box glass-card rounded-2xl p-4 shadow-sm ${colors[item.type] || 'border-slate-300 bg-white'}`;
-                card.innerHTML = `
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl font-black text-slate-300">${item.day}</span>
-                        <span class="text-[10px] font-black px-2 py-1 rounded-full bg-white border shadow-sm uppercase">${item.type}</span>
+                day.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-lg font-black text-slate-200">${item.day}</span>
+                        <span class="text-[8px] font-bold px-1.5 bg-slate-100 rounded uppercase">${item.type}</span>
                     </div>
-                    <h4 class="text-xs font-bold text-slate-800 leading-tight mb-2 uppercase tracking-tight">${item.topic}</h4>
-                    <p class="text-[10px] text-slate-500 italic leading-relaxed">"${item.hook}"</p>
-                `;
-                container.appendChild(card);
+                    <div class="text-[10px] font-bold leading-tight line-clamp-2">${item.topic}</div>
+                    <div class="text-[8px] text-slate-400 italic mt-1 line-clamp-2">"${item.hook}"</div>`;
+                container.appendChild(day);
             });
         }
     </script>
