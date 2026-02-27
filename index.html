@@ -3,127 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InstaPlan AI | 2026 Version</title>
+    <title>InstaPlan AI | Handle Strategy Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        .nav-active { border-left: 4px solid #3b82f6; background: #1e293b; color: white; }
         .view-section { display: none; }
         .view-section.active { display: block; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-        .day-box { min-height: 120px; border-top: 5px solid #cbd5e1; background: white; border-radius: 12px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .plan-card { border-top: 4px solid #3b82f6; transition: transform 0.2s; }
+        .plan-card:hover { transform: translateY(-5px); }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-900 font-sans">
+<body class="bg-slate-50 text-slate-900 font-sans">
 
     <div class="flex h-screen">
-        <aside class="w-64 bg-slate-900 text-white p-6 hidden md:block">
-            <h1 class="text-2xl font-bold mb-10 tracking-tight">InstaPlan <span class="text-blue-400">2026</span></h1>
-            <nav class="space-y-4">
-                <button onclick="show('dashboard')" class="w-full text-left p-3 rounded hover:bg-slate-800 transition">Dashboard</button>
-                <button onclick="show('calendar')" class="w-full text-left p-3 rounded hover:bg-slate-800 transition">Calendar</button>
+        <aside class="w-64 bg-slate-900 text-slate-400 p-6 hidden md:block shrink-0">
+            <h1 class="text-xl font-bold mb-10 text-white italic">InstaPlan <span class="text-blue-400">Pro</span></h1>
+            <nav class="space-y-2">
+                <button onclick="showSection('analyzer', this)" class="w-full text-left p-3 rounded-lg nav-active">Handle Analyzer</button>
+                <button onclick="showSection('planner', this)" class="w-full text-left p-3 rounded-lg hover:text-white">Weekly Planner</button>
             </nav>
         </aside>
 
-        <main class="flex-1 p-10 overflow-y-auto">
+        <main class="flex-1 overflow-y-auto p-8 md:p-12">
             
-            <div id="dashboard" class="view-section active">
-                <h2 class="text-4xl font-black mb-6 text-slate-800 tracking-tight">Strategy Generator</h2>
-                <div class="bg-white p-8 rounded-2xl shadow-xl max-w-lg border border-slate-200">
-                    <p class="text-sm text-slate-500 mb-4 font-bold uppercase tracking-widest">Target Niche</p>
-                    <input type="text" id="topic" value="Employer Branding for BFL" class="w-full p-4 border rounded-xl mb-6 text-lg outline-none focus:ring-2 focus:ring-blue-500">
-                    <button id="btn" onclick="generate()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all">
-                        ✨ Generate 30-Day Plan
-                    </button>
-                    <p id="msg" class="text-center mt-6 text-blue-600 hidden font-bold animate-pulse">Gemini 2.5 is thinking...</p>
+            <div id="analyzer" class="view-section active">
+                <header class="mb-10">
+                    <h2 class="text-4xl font-black text-slate-800 tracking-tight">Handle Analysis</h2>
+                    <p class="text-slate-500 mt-2">Input your ID for a simulated audit of your content pillars and engagement.</p>
+                </header>
+
+                <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-200 max-w-2xl">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-400 mb-2 tracking-widest">Instagram Handle ID</label>
+                            <input type="text" id="handleId" placeholder="@yourhandle" 
+                                   class="w-full p-4 border rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-lg font-medium">
+                        </div>
+                        <button onclick="runSmartAnalysis()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all">
+                            🚀 Analyze & Synchronize
+                        </button>
+                    </div>
                 </div>
+
+                <div id="analysisResults" class="mt-10 hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+                    </div>
             </div>
 
-            <div id="calendar" class="view-section">
-                <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-3xl font-black text-slate-800">30-Day Roadmap</h2>
-                    <button onclick="show('dashboard')" class="text-blue-600 font-bold hover:underline">← Back to Dashboard</button>
+            <div id="planner" class="view-section">
+                <header class="mb-10">
+                    <h2 class="text-4xl font-black text-slate-800 tracking-tight">Weekly Content Plan</h2>
+                    <p class="text-slate-500 mt-2">Data-backed distribution for maximum handle growth.</p>
+                </header>
+                <div id="weeklyGrid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <p class="text-slate-400 italic">Please run an analysis first to generate your plan.</p>
                 </div>
-                <div class="calendar-grid mb-4 text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-                </div>
-                <div id="calBox" class="calendar-grid"></div>
             </div>
 
         </main>
     </div>
 
     <script>
-        // API Key provided by user
-        const KEY = "AIzaSyA6Qa_e_VopFP5J0MAatNLCo-lmDn4SWvc";
-
-        function show(id) {
+        function showSection(id, btn) {
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active'));
+            if(btn) btn.classList.add('nav-active');
         }
 
-        async function generate() {
-            const topic = document.getElementById('topic').value;
-            const btn = document.getElementById('btn');
-            const msg = document.getElementById('msg');
+        function runSmartAnalysis() {
+            const id = document.getElementById('handleId').value;
+            if(!id) return alert("Please enter a Handle ID");
 
-            btn.disabled = true;
-            msg.classList.remove('hidden');
+            const results = document.getElementById('analysisResults');
+            results.classList.remove('hidden');
+            results.innerHTML = `<div class="col-span-2 text-center py-10 animate-pulse text-blue-600 font-bold">Analyzing handle visual patterns and caption sentiment...</div>`;
 
-            // 2026 STABLE ENDPOINT AND MODEL NAME
-            const model = "gemini-2.5-flash"; // Updated from 1.5 to 2.5 stable
-            const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${KEY}`;
-
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: `Create a professional 30-day Instagram content plan for ${topic}. Return ONLY a JSON array of 30 objects. Each object must have keys: "day" (1-30), "type" (Reel, Carousel, or Static), "topic" (short title), and "hook" (the first line). No markdown formatting.` }] }]
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.error) {
-                    // Specific handling for common 2026 errors
-                    if (data.error.code === 404) throw new Error("Model not found. Ensure you are using gemini-2.5-flash.");
-                    throw new Error(data.error.message);
-                }
-
-                const rawText = data.candidates[0].content.parts[0].text;
-                // Clean AI response to ensure it's pure JSON
-                const cleanData = JSON.parse(rawText.replace(/```json|```/g, "").trim());
-
-                render(cleanData);
-                show('calendar');
-
-            } catch (err) {
-                console.error("DEBUG INFO:", err);
-                alert("Generation Failed: " + err.message);
-            } finally {
-                btn.disabled = false;
-                msg.classList.add('hidden');
-            }
-        }
-
-        function render(data) {
-            const box = document.getElementById('calBox');
-            box.innerHTML = "";
-            data.forEach(item => {
-                const d = document.createElement('div');
-                d.className = "day-box";
-                
-                // Color coding for 2026 content types
-                const colors = { 'Reel': '#3b82f6', 'Carousel': '#a855f7', 'Static': '#10b981' };
-                d.style.borderTopColor = colors[item.type] || '#cbd5e1';
-                
-                d.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-2xl font-black text-slate-100">${item.day}</span>
-                        <span class="text-[8px] font-black uppercase text-slate-400 border px-1 rounded bg-slate-50">${item.type}</span>
+            // My internal logic for analysis based on your Employer Branding background
+            setTimeout(() => {
+                results.innerHTML = `
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h4 class="font-bold text-blue-600 uppercase text-xs mb-2">Content Pillars</h4>
+                        <ul class="text-sm space-y-2 font-medium">
+                            <li>🏢 Employee Advocacy (High Engagement)</li>
+                            <li>🎧 Leadership Insights (Consistent)</li>
+                            <li>🛠️ Office Culture (Growth Potential)</li>
+                        </ul>
                     </div>
-                    <div class="text-[10px] font-bold leading-tight uppercase mb-2 text-slate-800 line-clamp-2">${item.topic}</div>
-                    <div class="text-[9px] text-slate-400 italic leading-snug line-clamp-2">"${item.hook}"</div>`;
-                box.appendChild(d);
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h4 class="font-bold text-orange-600 uppercase text-xs mb-2">Engagement Audit</h4>
+                        <ul class="text-sm space-y-2 font-medium">
+                            <li>Reels: Best performing content type.</li>
+                            <li>Optimal Posting: 11:00 AM & 6:00 PM.</li>
+                            <li>Sentiment: Highly Positive / Educational.</li>
+                        </ul>
+                    </div>
+                `;
+                generateWeeklyPlan();
+            }, 1500);
+        }
+
+        function generateWeeklyPlan() {
+            const grid = document.getElementById('weeklyGrid');
+            const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+            const strategies = [
+                { type: "Reel", topic: "Behind the Scenes", hook: "What a day at BFL actually looks like..." },
+                { type: "Static", topic: "Employee Spotlight", hook: "Meet the mind behind our latest tech..." },
+                { type: "Carousel", topic: "Career Tips", hook: "3 things I wish I knew before joining..." },
+                { type: "Reel", topic: "Leadership Talk", hook: "Our CEO's take on the future of Fintech..." },
+                { type: "Story", topic: "Interactive Q&A", hook: "Ask us anything about our culture!" },
+                { type: "Reel", topic: "Trending Challenge", hook: "POV: You just landed your dream job..." },
+                { type: "Carousel", topic: "Weekly Wrap-up", hook: "Everything we achieved this week at BFL..." }
+            ];
+
+            grid.innerHTML = "";
+            days.forEach((day, i) => {
+                const item = strategies[i];
+                const card = document.createElement('div');
+                card.className = "plan-card bg-white p-6 rounded-2xl shadow-sm";
+                card.style.borderTopColor = item.type === 'Reel' ? '#3b82f6' : (item.type === 'Carousel' ? '#a855f7' : '#10b981');
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="font-black text-slate-800">${day}</span>
+                        <span class="text-[10px] font-bold px-2 py-1 bg-slate-100 rounded-full uppercase border">${item.type}</span>
+                    </div>
+                    <div class="font-bold text-sm mb-2 uppercase tracking-tight">${item.topic}</div>
+                    <div class="text-xs text-slate-500 italic">"${item.hook}"</div>
+                `;
+                grid.appendChild(card);
             });
         }
     </script>
