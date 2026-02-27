@@ -6,12 +6,11 @@
     <title>InstaPlan AI | BFL Branding</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .glass-card { background: white; border: 1px solid #e2e8f0; }
-        .nav-active { background-color: #2563eb !important; color: white !important; }
         .view-section { display: none; }
         .view-section.active { display: block; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-        .day-box { min-height: 120px; border-top: 4px solid #cbd5e1; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .day-box { min-height: 110px; border-top: 4px solid #e2e8f0; }
+        .nav-active { background-color: #2563eb !important; color: white !important; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans">
@@ -20,113 +19,115 @@
         <aside class="w-64 bg-slate-900 text-slate-300 p-6 hidden md:block shrink-0">
             <h1 class="text-2xl font-bold mb-8 text-white">InstaPlan <span class="text-blue-400">AI</span></h1>
             <nav class="space-y-2">
-                <button onclick="showSection('dashboard', this)" class="nav-btn w-full text-left p-3 rounded-lg nav-active">Dashboard</button>
-                <button onclick="showSection('calendar', this)" class="nav-btn w-full text-left p-3 rounded-lg hover:bg-slate-800">30-Day Calendar</button>
+                <button onclick="show('dashboard', this)" class="nav-btn w-full text-left p-3 rounded-lg nav-active">Dashboard</button>
+                <button onclick="show('calendar', this)" class="nav-btn w-full text-left p-3 rounded-lg hover:bg-slate-800">30-Day Calendar</button>
             </nav>
         </aside>
 
-        <main class="flex-1 overflow-y-auto p-10">
+        <main class="flex-1 overflow-y-auto p-8">
             
             <div id="dashboard" class="view-section active">
-                <header class="mb-10">
-                    <h2 class="text-4xl font-black italic">Strategy Hub</h2>
-                    <p class="text-slate-500">Create your 30-day employer branding roadmap.</p>
+                <header class="mb-8">
+                    <h2 class="text-4xl font-black">Plan Generator</h2>
+                    <p class="text-slate-500">Create a synchronized 30-day roadmap in seconds.</p>
                 </header>
 
-                <div class="glass-card p-8 rounded-3xl shadow-xl max-w-xl border-2 border-blue-50">
-                    <div class="space-y-6">
-                        <div>
-                            <label class="block text-xs font-bold uppercase mb-2">Your Niche</label>
-                            <input type="text" id="nicheInput" value="Employer Branding for BFL" class="w-full p-4 border rounded-2xl outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <button id="generateBtn" onclick="startGeneration()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
+                <div class="bg-white p-8 rounded-3xl shadow-xl max-w-lg border border-slate-200">
+                    <div class="space-y-4">
+                        <label class="block text-xs font-bold uppercase text-slate-400">Topic / Industry</label>
+                        <input type="text" id="niche" value="Employer Branding for BFL" 
+                               class="w-full p-4 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-lg">
+                        <button id="genBtn" onclick="runAI()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition-all">
                             ✨ Generate 30-Day Plan
                         </button>
+                        <p id="status" class="text-center text-sm text-slate-400 hidden italic">AI is working... please wait 10 seconds.</p>
                     </div>
                 </div>
             </div>
 
             <div id="calendar" class="view-section">
-                <h2 class="text-3xl font-bold mb-6">30-Day Roadmap</h2>
-                <div class="calendar-grid mb-4 text-center text-[10px] font-bold uppercase text-slate-400">
-                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                <h2 class="text-3xl font-bold mb-6 italic">30-Day Content Roadmap</h2>
+                <div class="calendar-grid mb-2 text-center text-[10px] font-bold text-slate-400">
+                    <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
                 </div>
-                <div id="calendarContent" class="calendar-grid"></div>
+                <div id="calBox" class="calendar-grid"></div>
             </div>
 
         </main>
     </div>
 
     <script>
-        const API_KEY = "AIzaSyA6Qa_e_VopFP5J0MAatNLCo-lmDn4SWvc";
+        const KEY = "AIzaSyA6Qa_e_VopFP5J0MAatNLCo-lmDn4SWvc";
 
-        function showSection(id, btn) {
+        function show(id, btn) {
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
             if(btn) btn.classList.add('nav-active');
         }
 
-        async function startGeneration() {
-            const niche = document.getElementById('nicheInput').value;
-            const btn = document.getElementById('generateBtn');
-            
-            btn.disabled = true;
-            btn.innerText = "⏳ AI is drafting your plan...";
+        async function runAI() {
+            const topic = document.getElementById('niche').value;
+            const btn = document.getElementById('genBtn');
+            const status = document.getElementById('status');
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+            btn.disabled = true;
+            status.classList.remove('hidden');
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEY}`;
             
-            const payload = {
+            const body = {
                 contents: [{
                     parts: [{
-                        text: `Create a 30-day Instagram plan for ${niche}. 
+                        text: `Generate a 30-day Instagram plan for ${topic}. 
                         Return ONLY a JSON array of 30 objects. 
-                        Format: [{"day": 1, "type": "Reel", "topic": "Title", "hook": "First line"}]`
+                        Format: [{"day": 1, "type": "Reel", "topic": "Title", "hook": "Hook sentence"}]`
                     }]
                 }]
             };
 
             try {
-                const response = await fetch(url, {
+                const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(body)
                 });
 
-                const result = await response.json();
-                const text = result.candidates[0].content.parts[0].text;
-                const cleanJson = text.replace(/```json|```/g, "").trim();
-                const data = JSON.parse(cleanJson);
+                const json = await res.json();
+                const rawText = json.candidates[0].content.parts[0].text;
+                const cleanData = JSON.parse(rawText.replace(/```json|```/g, "").trim());
 
-                renderCalendar(data);
-                showSection('calendar', document.querySelectorAll('.nav-btn')[1]);
-
-            } catch (err) {
-                console.error(err);
-                alert("Error: Key might be inactive or niche is empty.");
+                render(cleanData);
+                show('calendar', document.querySelectorAll('.nav-btn')[1]);
+            } catch (e) {
+                alert("Error: Check your connection or API key status.");
+                console.error(e);
             } finally {
                 btn.disabled = false;
-                btn.innerText = "✨ Generate 30-Day Plan";
+                status.classList.add('hidden');
             }
         }
 
-        function renderCalendar(data) {
-            const container = document.getElementById('calendarContent');
-            container.innerHTML = "";
+        function render(data) {
+            const box = document.getElementById('calBox');
+            box.innerHTML = "";
             data.forEach(item => {
-                const day = document.createElement('div');
-                day.className = "day-box glass-card rounded-xl p-3 shadow-sm bg-white";
-                if(item.type === 'Reel') day.style.borderTopColor = '#3b82f6';
-                if(item.type === 'Carousel') day.style.borderTopColor = '#a855f7';
+                const d = document.createElement('div');
+                d.className = "day-box bg-white rounded-xl p-3 shadow-sm border border-slate-100";
                 
-                day.innerHTML = `
+                // Color coding based on type
+                if(item.type === 'Reel') d.style.borderTopColor = '#3b82f6';
+                else if(item.type === 'Carousel') d.style.borderTopColor = '#a855f7';
+                else d.style.borderTopColor = '#10b981';
+
+                d.innerHTML = `
                     <div class="flex justify-between items-center mb-1">
-                        <span class="text-lg font-black text-slate-200">${item.day}</span>
-                        <span class="text-[8px] font-bold px-1.5 bg-slate-100 rounded uppercase">${item.type}</span>
+                        <span class="text-xl font-black text-slate-100">${item.day}</span>
+                        <span class="text-[8px] font-bold px-1.5 py-0.5 bg-slate-50 rounded uppercase text-slate-400 border">${item.type}</span>
                     </div>
-                    <div class="text-[10px] font-bold leading-tight line-clamp-2">${item.topic}</div>
-                    <div class="text-[8px] text-slate-400 italic mt-1 line-clamp-2">"${item.hook}"</div>`;
-                container.appendChild(day);
+                    <div class="text-[10px] font-bold leading-tight line-clamp-2 uppercase">${item.topic}</div>
+                    <div class="text-[9px] text-slate-400 italic mt-1 line-clamp-2">"${item.hook}"</div>`;
+                box.appendChild(d);
             });
         }
     </script>
