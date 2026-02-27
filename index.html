@@ -3,13 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InstaPlan AI | Dashboard</title>
+    <title>InstaPlan AI Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script type="importmap">
+      { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
+    </script>
     <style>
-        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(200, 200, 200, 0.3); }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid #e2e8f0; }
         .nav-active { background-color: #2563eb !important; color: white !important; }
         .view-section { display: none; }
         .view-section.active { display: block; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .day-box { min-height: 120px; transition: all 0.2s; }
+        .day-box:hover { background-color: #f8fafc; transform: translateY(-2px); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans">
@@ -17,93 +23,136 @@
     <div class="flex h-screen">
         <aside class="w-64 bg-slate-900 text-slate-300 p-6 hidden md:block">
             <h1 class="text-2xl font-bold mb-8 text-white">InstaPlan <span class="text-blue-400">AI</span></h1>
-            <nav class="space-y-2">
-                <button onclick="showSection('dashboard', this)" class="nav-btn w-full text-left p-3 rounded-lg hover:bg-slate-800 transition nav-active">Dashboard</button>
-                <button onclick="showSection('analysis', this)" class="nav-btn w-full text-left p-3 rounded-lg hover:bg-slate-800 transition">Handle Analysis</button>
-                <button onclick="showSection('calendar', this)" class="nav-btn w-full text-left p-3 rounded-lg hover:bg-slate-800 transition">Weekly Calendar</button>
-                <button onclick="showSection('settings', this)" class="nav-btn w-full text-left p-3 rounded-lg hover:bg-slate-800 transition">Settings</button>
+            <nav class="space-y-2" id="navContainer">
+                <button onclick="showSection('dashboard', this)" class="nav-btn w-full text-left p-3 rounded-lg nav-active">Dashboard</button>
+                <button onclick="showSection('calendar', this)" class="nav-btn w-full text-left p-3 rounded-lg hover:bg-slate-800">30-Day Calendar</button>
+                <button onclick="showSection('settings', this)" class="nav-btn w-full text-left p-3 rounded-lg hover:bg-slate-800">Settings</button>
             </nav>
         </aside>
 
-        <main class="flex-1 overflow-y-auto p-8">
+        <main class="flex-1 overflow-y-auto p-4 md:p-8">
             
             <div id="dashboard" class="view-section active">
-                <header class="mb-8"><h2 class="text-3xl font-bold">Welcome to Dashboard</h2></header>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="glass-card p-6 rounded-2xl shadow-sm">
-                        <h3 class="font-bold mb-2">Total Handles Analyzed</h3>
-                        <p class="text-4xl font-bold text-blue-600">0</p>
+                <header class="mb-8">
+                    <h2 class="text-3xl font-bold">Generate New Strategy</h2>
+                    <p class="text-slate-500">Analyze a niche or handle to create a fresh 30-day plan.</p>
+                </header>
+                <div class="glass-card p-6 rounded-2xl shadow-sm max-w-2xl">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">Niche / Industry</label>
+                            <input type="text" id="nicheInput" placeholder="e.g. Fintech, Personal Branding, Cooking" 
+                                   class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <button id="generateBtn" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                            <span>✨ Generate 30-Day Plan</span>
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div id="analysis" class="view-section">
-                <header class="mb-8"><h2 class="text-3xl font-bold">Handle Analysis</h2></header>
-                <div class="glass-card p-6 rounded-2xl mb-8">
-                    <input type="text" id="handleInput" placeholder="@username" class="p-3 border rounded-xl w-full md:w-1/2 mb-4">
-                    <button onclick="runAnalysis()" class="bg-blue-600 text-white px-6 py-3 rounded-xl block">Start Deep Scan</button>
-                </div>
-                <div id="analysisOutput" class="text-slate-500 italic">No data yet.</div>
-            </div>
-
             <div id="calendar" class="view-section">
-                <header class="mb-8"><h2 class="text-3xl font-bold">Your Weekly Strategy</h2></header>
-                <div class="glass-card p-6 rounded-2xl overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="border-b text-slate-400"><tr><th class="pb-3">Day</th><th>Post Type</th><th>Goal</th></tr></thead>
-                        <tbody id="calendarTable" class="divide-y">
-                            <tr><td class="py-4">Monday</td><td>Reel</td><td>Brand Awareness</td></tr>
-                        </tbody>
-                    </table>
+                <header class="mb-6 flex justify-between items-center">
+                    <h2 class="text-3xl font-bold">30-Day Content Matrix</h2>
+                    <div class="text-sm text-slate-500 bg-white px-3 py-1 rounded-full border">March 2026</div>
+                </header>
+                <div class="calendar-grid mb-4 font-bold text-center text-slate-400 text-xs uppercase tracking-widest">
+                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
                 </div>
+                <div id="calendarContent" class="calendar-grid">
+                    </div>
             </div>
 
             <div id="settings" class="view-section">
-                <header class="mb-8"><h2 class="text-3xl font-bold">App Settings</h2></header>
+                <header class="mb-8"><h2 class="text-3xl font-bold">Configuration</h2></header>
                 <div class="glass-card p-6 rounded-2xl max-w-lg">
-                    <label class="block mb-2 font-semibold">API Key (Gemini/RapidAPI)</label>
-                    <input type="password" placeholder="sk-..." class="w-full p-3 border rounded-xl mb-4">
-                    <button class="bg-slate-900 text-white px-6 py-2 rounded-lg">Save Settings</button>
+                    <label class="block mb-2 font-semibold">Gemini API Key</label>
+                    <input type="password" id="apiKeyInput" placeholder="Paste sk-..." class="w-full p-3 border rounded-xl mb-4">
+                    <button onclick="saveApiKey()" class="bg-slate-900 text-white px-6 py-2 rounded-lg">Save API Key</button>
+                    <p class="text-xs text-slate-400 mt-4 italic">Your key is stored locally in your browser only.</p>
                 </div>
             </div>
 
         </main>
     </div>
 
-    <script>
-        // NAVIGATION LOGIC
-        function showSection(sectionId, btnElement) {
-            // Hide all sections
-            document.querySelectorAll('.view-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            // Show selected section
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+
+        // APP STATE
+        window.showSection = (sectionId, btnElement) => {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
-
-            // Update button styles
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('nav-active');
-            });
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
             btnElement.classList.add('nav-active');
-        }
+        };
 
-        // ANALYSIS LOGIC
-        function runAnalysis() {
-            const handle = document.getElementById('handleInput').value;
-            const output = document.getElementById('analysisOutput');
-            
-            if(!handle) return alert("Enter a handle!");
-            
-            output.innerHTML = `<span class="animate-pulse">Analyzing visual patterns for ${handle}...</span>`;
-            
-            setTimeout(() => {
-                output.innerHTML = `
-                    <div class="text-slate-800 font-medium">Analysis Complete for ${handle}:</div>
-                    <ul class="list-disc ml-5 mt-2">
-                        <li>High engagement on video captions under 50 characters.</li>
-                        <li>Preferred color palette: Warm tones/Blue accents.</li>
-                    </ul>`;
-            }, 2000);
+        window.saveApiKey = () => {
+            const key = document.getElementById('apiKeyInput').value;
+            localStorage.setItem('GEMINI_KEY', key);
+            alert("API Key saved!");
+        };
+
+        // UI Initialization
+        document.getElementById('apiKeyInput').value = localStorage.getItem('GEMINI_KEY') || "";
+
+        // GENERATION LOGIC
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const apiKey = localStorage.getItem('GEMINI_KEY');
+            const niche = document.getElementById('nicheInput').value;
+
+            if (!apiKey) return alert("Please set your Gemini API key in Settings first!");
+            if (!niche) return alert("Please enter a niche/industry.");
+
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<span>⏳ Brainstorming 30 Days...</span>`;
+
+            try {
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+                const prompt = `Create a 30-day Instagram content plan for the niche: ${niche}. 
+                Format the response as a valid JSON array of 30 objects. 
+                Each object must have: "day" (1-30), "type" (Reel, Carousel, or Story), "topic" (Short title), "hook" (The first line).
+                Ensure a mix of educational, promotional, and behind-the-scenes content. Do not include markdown formatting, just raw JSON.`;
+
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                const text = response.text().replace(/```json/g, "").replace(/```/g, "").trim();
+                const plan = JSON.parse(text);
+
+                renderCalendar(plan);
+                showSection('calendar', document.querySelectorAll('.nav-btn')[1]);
+
+            } catch (error) {
+                console.error(error);
+                alert("Error connecting to Gemini. Check your API key or Niche input.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span>✨ Generate 30-Day Plan</span>`;
+            }
+        });
+
+        function renderCalendar(data) {
+            const container = document.getElementById('calendarContent');
+            container.innerHTML = ""; // Clear
+
+            data.forEach(item => {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = "day-box glass-card rounded-xl p-3 flex flex-col justify-between shadow-sm border-t-4 " + 
+                                   (item.type === 'Reel' ? 'border-blue-500' : (item.type === 'Carousel' ? 'border-purple-500' : 'border-slate-300'));
+                
+                dayDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xl font-black text-slate-200">${item.day}</span>
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 uppercase">${item.type}</span>
+                    </div>
+                    <div class="text-xs font-bold leading-tight mb-1 line-clamp-2">${item.topic}</div>
+                    <div class="text-[10px] text-slate-500 italic line-clamp-2">"${item.hook}"</div>
+                `;
+                container.appendChild(dayDiv);
+            });
         }
     </script>
 </body>
