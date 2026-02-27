@@ -24,12 +24,11 @@
         </aside>
 
         <main class="flex-1 p-10 overflow-y-auto">
-            
             <div id="dashboard" class="view-section active">
-                <h2 class="text-4xl font-black mb-6 text-slate-800">Plan Generator</h2>
+                <h2 class="text-4xl font-black mb-6">Plan Generator</h2>
                 <div class="bg-white p-8 rounded-2xl shadow-lg max-w-lg">
                     <input type="text" id="topic" value="Employer Branding for BFL" class="w-full p-4 border rounded-xl mb-4 text-lg outline-none">
-                    <button id="btn" onclick="generate()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg">
+                    <button id="btn" onclick="generate()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700">
                         ✨ Generate 30-Day Plan
                     </button>
                     <p id="msg" class="text-center mt-4 text-slate-500 hidden font-medium animate-pulse">AI is thinking... please wait.</p>
@@ -37,15 +36,13 @@
             </div>
 
             <div id="calendar" class="view-section">
-                <h2 class="text-3xl font-bold mb-8 text-slate-800">Your 30-Day Roadmap</h2>
+                <h2 class="text-3xl font-bold mb-8">Your 30-Day Roadmap</h2>
                 <div id="calBox" class="calendar-grid"></div>
             </div>
-
         </main>
     </div>
 
     <script>
-        // YOUR KEY
         const KEY = "AIzaSyA6Qa_e_VopFP5J0MAatNLCo-lmDn4SWvc";
 
         function show(id) {
@@ -61,24 +58,21 @@
             btn.disabled = true;
             msg.classList.remove('hidden');
 
-            // API URL using v1beta (more stable for direct fetch)
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEY}`;
+            // UPDATED: Using stable v1 endpoint and explicit model path
+            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${KEY}`;
 
             try {
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: `Provide a 30-day Instagram plan for ${topic}. Return ONLY a JSON array of 30 objects. Schema: [{"day": 1, "type": "Reel", "topic": "Title", "hook": "Hook"}]` }] }]
+                        contents: [{ parts: [{ text: `Create a 30-day Instagram content plan for ${topic}. Return ONLY a JSON array of 30 objects. Format: [{"day": 1, "type": "Reel", "topic": "Title", "hook": "Hook sentence"}]` }] }]
                     })
                 });
 
                 const data = await response.json();
-                console.log("Full API Response:", data); // Check this in F12 Console if it fails!
-
-                if (data.error) {
-                    throw new Error(data.error.message);
-                }
+                
+                if (data.error) throw new Error(data.error.message);
 
                 const rawText = data.candidates[0].content.parts[0].text;
                 const cleanData = JSON.parse(rawText.replace(/```json|```/g, "").trim());
@@ -88,7 +82,7 @@
 
             } catch (err) {
                 console.error("GENERATION FAILED:", err);
-                alert("Error: " + err.message + "\n\nCheck the browser console (F12) for details.");
+                alert("Error: " + err.message);
             } finally {
                 btn.disabled = false;
                 msg.classList.add('hidden');
@@ -101,7 +95,7 @@
             data.forEach(item => {
                 const d = document.createElement('div');
                 d.className = "day-box rounded-xl p-4 shadow-sm";
-                d.style.borderTopColor = item.type === 'Reel' ? '#3b82f6' : '#a855f7';
+                d.style.borderTopColor = item.type === 'Reel' ? '#3b82f6' : (item.type === 'Carousel' ? '#a855f7' : '#10b981');
                 
                 d.innerHTML = `
                     <div class="flex justify-between mb-2">
