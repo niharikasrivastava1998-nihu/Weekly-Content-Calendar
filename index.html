@@ -3,46 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InstaPlan AI | BFL</title>
+    <title>InstaPlan AI | 2026 Version</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .view-section { display: none; }
         .view-section.active { display: block; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-        .day-box { min-height: 120px; border-top: 5px solid #e2e8f0; background: white; }
+        .day-box { min-height: 120px; border-top: 5px solid #cbd5e1; background: white; border-radius: 12px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans">
 
     <div class="flex h-screen">
         <aside class="w-64 bg-slate-900 text-white p-6 hidden md:block">
-            <h1 class="text-2xl font-bold mb-10">InstaPlan <span class="text-blue-400">AI</span></h1>
+            <h1 class="text-2xl font-bold mb-10 tracking-tight">InstaPlan <span class="text-blue-400">2026</span></h1>
             <nav class="space-y-4">
-                <button onclick="show('dashboard')" class="w-full text-left p-3 rounded hover:bg-slate-800">Dashboard</button>
-                <button onclick="show('calendar')" class="w-full text-left p-3 rounded hover:bg-slate-800">Calendar</button>
+                <button onclick="show('dashboard')" class="w-full text-left p-3 rounded hover:bg-slate-800 transition">Dashboard</button>
+                <button onclick="show('calendar')" class="w-full text-left p-3 rounded hover:bg-slate-800 transition">Calendar</button>
             </nav>
         </aside>
 
         <main class="flex-1 p-10 overflow-y-auto">
+            
             <div id="dashboard" class="view-section active">
-                <h2 class="text-4xl font-black mb-6">Plan Generator</h2>
-                <div class="bg-white p-8 rounded-2xl shadow-lg max-w-lg">
-                    <input type="text" id="topic" value="Employer Branding for BFL" class="w-full p-4 border rounded-xl mb-4 text-lg outline-none">
-                    <button id="btn" onclick="generate()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700">
+                <h2 class="text-4xl font-black mb-6 text-slate-800 tracking-tight">Strategy Generator</h2>
+                <div class="bg-white p-8 rounded-2xl shadow-xl max-w-lg border border-slate-200">
+                    <p class="text-sm text-slate-500 mb-4 font-bold uppercase tracking-widest">Target Niche</p>
+                    <input type="text" id="topic" value="Employer Branding for BFL" class="w-full p-4 border rounded-xl mb-6 text-lg outline-none focus:ring-2 focus:ring-blue-500">
+                    <button id="btn" onclick="generate()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all">
                         ✨ Generate 30-Day Plan
                     </button>
-                    <p id="msg" class="text-center mt-4 text-slate-500 hidden font-medium animate-pulse">AI is thinking... please wait.</p>
+                    <p id="msg" class="text-center mt-6 text-blue-600 hidden font-bold animate-pulse">Gemini 2.5 is thinking...</p>
                 </div>
             </div>
 
             <div id="calendar" class="view-section">
-                <h2 class="text-3xl font-bold mb-8">Your 30-Day Roadmap</h2>
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-black text-slate-800">30-Day Roadmap</h2>
+                    <button onclick="show('dashboard')" class="text-blue-600 font-bold hover:underline">← Back to Dashboard</button>
+                </div>
+                <div class="calendar-grid mb-4 text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                </div>
                 <div id="calBox" class="calendar-grid"></div>
             </div>
+
         </main>
     </div>
 
     <script>
+        // API Key provided by user
         const KEY = "AIzaSyA6Qa_e_VopFP5J0MAatNLCo-lmDn4SWvc";
 
         function show(id) {
@@ -58,31 +68,37 @@
             btn.disabled = true;
             msg.classList.remove('hidden');
 
-            // UPDATED: Using stable v1 endpoint and explicit model path
-            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${KEY}`;
+            // 2026 STABLE ENDPOINT AND MODEL NAME
+            const model = "gemini-2.5-flash"; // Updated from 1.5 to 2.5 stable
+            const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${KEY}`;
 
             try {
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: `Create a 30-day Instagram content plan for ${topic}. Return ONLY a JSON array of 30 objects. Format: [{"day": 1, "type": "Reel", "topic": "Title", "hook": "Hook sentence"}]` }] }]
+                        contents: [{ parts: [{ text: `Create a professional 30-day Instagram content plan for ${topic}. Return ONLY a JSON array of 30 objects. Each object must have keys: "day" (1-30), "type" (Reel, Carousel, or Static), "topic" (short title), and "hook" (the first line). No markdown formatting.` }] }]
                     })
                 });
 
                 const data = await response.json();
-                
-                if (data.error) throw new Error(data.error.message);
+
+                if (data.error) {
+                    // Specific handling for common 2026 errors
+                    if (data.error.code === 404) throw new Error("Model not found. Ensure you are using gemini-2.5-flash.");
+                    throw new Error(data.error.message);
+                }
 
                 const rawText = data.candidates[0].content.parts[0].text;
+                // Clean AI response to ensure it's pure JSON
                 const cleanData = JSON.parse(rawText.replace(/```json|```/g, "").trim());
 
                 render(cleanData);
                 show('calendar');
 
             } catch (err) {
-                console.error("GENERATION FAILED:", err);
-                alert("Error: " + err.message);
+                console.error("DEBUG INFO:", err);
+                alert("Generation Failed: " + err.message);
             } finally {
                 btn.disabled = false;
                 msg.classList.add('hidden');
@@ -94,16 +110,19 @@
             box.innerHTML = "";
             data.forEach(item => {
                 const d = document.createElement('div');
-                d.className = "day-box rounded-xl p-4 shadow-sm";
-                d.style.borderTopColor = item.type === 'Reel' ? '#3b82f6' : (item.type === 'Carousel' ? '#a855f7' : '#10b981');
+                d.className = "day-box";
+                
+                // Color coding for 2026 content types
+                const colors = { 'Reel': '#3b82f6', 'Carousel': '#a855f7', 'Static': '#10b981' };
+                d.style.borderTopColor = colors[item.type] || '#cbd5e1';
                 
                 d.innerHTML = `
-                    <div class="flex justify-between mb-2">
+                    <div class="flex justify-between items-center mb-2">
                         <span class="text-2xl font-black text-slate-100">${item.day}</span>
-                        <span class="text-[10px] font-bold uppercase text-slate-400">${item.type}</span>
+                        <span class="text-[8px] font-black uppercase text-slate-400 border px-1 rounded bg-slate-50">${item.type}</span>
                     </div>
-                    <div class="text-xs font-bold leading-tight uppercase mb-2 text-slate-700">${item.topic}</div>
-                    <div class="text-[10px] text-slate-400 italic font-medium leading-relaxed">"${item.hook}"</div>`;
+                    <div class="text-[10px] font-bold leading-tight uppercase mb-2 text-slate-800 line-clamp-2">${item.topic}</div>
+                    <div class="text-[9px] text-slate-400 italic leading-snug line-clamp-2">"${item.hook}"</div>`;
                 box.appendChild(d);
             });
         }
