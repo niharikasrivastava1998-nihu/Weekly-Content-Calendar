@@ -3,116 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InstaPlan AI | Social Media Analyzer</title>
+    <title>InstaPlan AI | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .glass-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(200, 200, 200, 0.3);
-        }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(200, 200, 200, 0.3); }
+        .nav-active { background-color: #2563eb !important; color: white !important; }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans">
 
     <div class="flex h-screen">
-        <aside class="w-64 bg-slate-900 text-white p-6 hidden md:block">
-            <h1 class="text-2xl font-bold mb-8">InstaPlan <span class="text-blue-400">AI</span></h1>
-            <nav class="space-y-4">
-                <a href="#" class="block p-3 bg-blue-600 rounded-lg">Dashboard</a>
-                <a href="#" class="block p-3 hover:bg-slate-800 rounded-lg">Handle Analysis</a>
-                <a href="#" class="block p-3 hover:bg-slate-800 rounded-lg">Weekly Calendar</a>
-                <a href="#" class="block p-3 hover:bg-slate-800 rounded-lg">Settings</a>
+        <aside class="w-64 bg-slate-900 text-slate-300 p-6 hidden md:block">
+            <h1 class="text-2xl font-bold mb-8 text-white">InstaPlan <span class="text-blue-400">AI</span></h1>
+            <nav class="space-y-2">
+                <button onclick="showSection('dashboard', this)" class="nav-btn w-full text-left p-3 rounded-lg hover:bg-slate-800 transition nav-active">Dashboard</button>
+                <button onclick="showSection('analysis', this)" class="nav-btn w-full text-left p-3 rounded-lg hover:bg-slate-800 transition">Handle Analysis</button>
+                <button onclick="showSection('calendar', this)" class="nav-btn w-full text-left p-3 rounded-lg hover:bg-slate-800 transition">Weekly Calendar</button>
+                <button onclick="showSection('settings', this)" class="nav-btn w-full text-left p-3 rounded-lg hover:bg-slate-800 transition">Settings</button>
             </nav>
         </aside>
 
         <main class="flex-1 overflow-y-auto p-8">
-            <header class="mb-8">
-                <h2 class="text-3xl font-bold">Social Media Strategy Builder</h2>
-                <p class="text-slate-500">Analyze any public handle to generate a data-backed weekly plan.</p>
-            </header>
-
-            <section class="glass-card p-6 rounded-2xl mb-8 shadow-sm">
-                <div class="flex flex-col md:flex-row gap-4">
-                    <input type="text" id="handleInput" placeholder="Enter Instagram Handle (e.g., @zomato)" 
-                           class="flex-1 p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                    <button onclick="analyzeHandle()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-blue-700 transition">
-                        Analyze & Plan
-                    </button>
-                </div>
-            </section>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-1 space-y-6">
+            
+            <div id="dashboard" class="view-section active">
+                <header class="mb-8"><h2 class="text-3xl font-bold">Welcome to Dashboard</h2></header>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="glass-card p-6 rounded-2xl shadow-sm">
-                        <h3 class="font-bold text-lg mb-4">Handle Insights</h3>
-                        <div id="insightsContent" class="text-slate-600 space-y-2">
-                            <p>Enter a handle to see content pillars and tone analysis.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="lg:col-span-2">
-                    <div class="glass-card p-6 rounded-2xl shadow-sm">
-                        <h3 class="font-bold text-lg mb-4">Proposed Weekly Plan</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead>
-                                    <tr class="border-b text-slate-400 text-sm">
-                                        <th class="pb-3">Day</th>
-                                        <th class="pb-3">Content Type</th>
-                                        <th class="pb-3">Hook Suggestion</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="planTable" class="divide-y">
-                                    </tbody>
-                            </table>
-                        </div>
+                        <h3 class="font-bold mb-2">Total Handles Analyzed</h3>
+                        <p class="text-4xl font-bold text-blue-600">0</p>
                     </div>
                 </div>
             </div>
+
+            <div id="analysis" class="view-section">
+                <header class="mb-8"><h2 class="text-3xl font-bold">Handle Analysis</h2></header>
+                <div class="glass-card p-6 rounded-2xl mb-8">
+                    <input type="text" id="handleInput" placeholder="@username" class="p-3 border rounded-xl w-full md:w-1/2 mb-4">
+                    <button onclick="runAnalysis()" class="bg-blue-600 text-white px-6 py-3 rounded-xl block">Start Deep Scan</button>
+                </div>
+                <div id="analysisOutput" class="text-slate-500 italic">No data yet.</div>
+            </div>
+
+            <div id="calendar" class="view-section">
+                <header class="mb-8"><h2 class="text-3xl font-bold">Your Weekly Strategy</h2></header>
+                <div class="glass-card p-6 rounded-2xl overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="border-b text-slate-400"><tr><th class="pb-3">Day</th><th>Post Type</th><th>Goal</th></tr></thead>
+                        <tbody id="calendarTable" class="divide-y">
+                            <tr><td class="py-4">Monday</td><td>Reel</td><td>Brand Awareness</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="settings" class="view-section">
+                <header class="mb-8"><h2 class="text-3xl font-bold">App Settings</h2></header>
+                <div class="glass-card p-6 rounded-2xl max-w-lg">
+                    <label class="block mb-2 font-semibold">API Key (Gemini/RapidAPI)</label>
+                    <input type="password" placeholder="sk-..." class="w-full p-3 border rounded-xl mb-4">
+                    <button class="bg-slate-900 text-white px-6 py-2 rounded-lg">Save Settings</button>
+                </div>
+            </div>
+
         </main>
     </div>
 
     <script>
-        function analyzeHandle() {
+        // NAVIGATION LOGIC
+        function showSection(sectionId, btnElement) {
+            // Hide all sections
+            document.querySelectorAll('.view-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+
+            // Update button styles
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('nav-active');
+            });
+            btnElement.classList.add('nav-active');
+        }
+
+        // ANALYSIS LOGIC
+        function runAnalysis() {
             const handle = document.getElementById('handleInput').value;
-            if (!handle) return alert("Please enter a handle");
-
-            // UI Feedback
-            document.getElementById('insightsContent').innerHTML = `<p class='animate-pulse'>Analyzing @${handle} videos and captions...</p>`;
+            const output = document.getElementById('analysisOutput');
             
-            // Mocking the AI Logic
+            if(!handle) return alert("Enter a handle!");
+            
+            output.innerHTML = `<span class="animate-pulse">Analyzing visual patterns for ${handle}...</span>`;
+            
             setTimeout(() => {
-                const mockInsights = `
-                    <ul class="list-disc pl-4 space-y-2">
-                        <li><strong>Tone:</strong> Energetic & Educational</li>
-                        <li><strong>Pillars:</strong> Behind the Scenes, Tips, Trends</li>
-                        <li><strong>Video Style:</strong> Fast-paced cuts, Text overlays</li>
-                    </ul>
-                `;
-                document.getElementById('insightsContent').innerHTML = mockInsights;
-
-                const days = ["Monday", "Wednesday", "Friday"];
-                const types = ["Reel", "Carousel", "Reel"];
-                const hooks = [
-                    "The one thing nobody tells you about...",
-                    "Stop doing [X] if you want [Y]",
-                    "3 tools I use to stay productive"
-                ];
-
-                let tableHtml = "";
-                days.forEach((day, i) => {
-                    tableHtml += `
-                        <tr class="hover:bg-slate-50 transition">
-                            <td class="py-4 font-medium">${day}</td>
-                            <td class="py-4"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs uppercase font-bold">${types[i]}</span></td>
-                            <td class="py-4 text-slate-600 italic">"${hooks[i]}"</td>
-                        </tr>
-                    `;
-                });
-                document.getElementById('planTable').innerHTML = tableHtml;
-            }, 1500);
+                output.innerHTML = `
+                    <div class="text-slate-800 font-medium">Analysis Complete for ${handle}:</div>
+                    <ul class="list-disc ml-5 mt-2">
+                        <li>High engagement on video captions under 50 characters.</li>
+                        <li>Preferred color palette: Warm tones/Blue accents.</li>
+                    </ul>`;
+            }, 2000);
         }
     </script>
 </body>
